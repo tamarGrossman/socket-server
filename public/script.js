@@ -9,6 +9,7 @@ const userForm = document.getElementById('user-form');
 const usernameInput = document.getElementById('username');
 const colorInput = document.getElementById('user-color');
 const statusText = document.getElementById('status');
+const disconnectButton = document.getElementById('disconnect-btn');
 const form = document.getElementById('form');
 const input = document.getElementById('input');
 const messages = document.getElementById('messages');
@@ -43,6 +44,30 @@ userForm.addEventListener('submit', e => {
     statusText.style.color = '#444';
 });
 
+// Handle disconnect button
+disconnectButton.addEventListener('click', () => {
+    if (!socket || !socket.connected) return;
+
+    const nameToShow = myUser.name || 'unknown';
+    const colorToShow = myUser.color || '#000000';
+
+    socket.emit('client disconnecting', {
+        name: nameToShow,
+        color: colorToShow
+    });
+
+    socket.disconnect();
+
+    statusText.textContent = 'Disconnected';
+    statusText.style.color = '#aa0000';
+
+    // disable inputs
+    usernameInput.disabled = true;
+    colorInput.disabled = true;
+    disconnectButton.disabled = true;
+    input.disabled = true;
+});
+
 // Handle chat message form submission
 form.addEventListener('submit', e => {
     e.preventDefault();
@@ -72,6 +97,14 @@ socket.on('client details updated', ({ userId, name, color }) => {
             statusText.textContent = '';
         }, 2500);
     }
+});
+
+socket.on('user left', ({ name, color, text }) => {
+    const item = document.createElement('li');
+    item.innerHTML = `<strong>${text || `לקוח ${name} התנתק מהמערכת`}</strong>`;
+    item.style.color = color || '#000000';
+    messages.append(item);
+    messages.scrollTop = messages.scrollHeight;
 });
 
 socket.on('send message', msgFromServer => {

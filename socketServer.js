@@ -39,6 +39,7 @@ export const createSocket = (httpServer) => {
             console.log(`user ${socket.userId} set profile: ${name}, ${color}`);
         });
 
+
         socket.on('new message', (newMessage) => {
             // שיגור אירוע לכל הלקוחות שמחוברים כרגע
             const messageName = socket.userDetails.name || 'unknown';
@@ -49,6 +50,38 @@ export const createSocket = (httpServer) => {
                 name: messageName,
                 color: messageColor
             });
+        });
+
+        socket.on('client disconnecting', ({ name, color }) => {
+            const messageName = name || socket.userDetails.name || 'unknown';
+            const messageColor = color || socket.userDetails.color || '#000000';
+
+            socket.broadcast.emit('user left', {
+                name: messageName,
+                color: messageColor,
+                text: `לקוח ${messageName} התנתק מהמערכת`
+            });
+
+            socket._announcedDisconnect = true;
+            console.log(`user ${socket.userId} disconnecting (manual) name=${messageName}`);
+        });
+
+        socket.on('disconnect', (reason) => {
+            if (socket._announcedDisconnect) {
+                console.log(`user ${socket.userId} disconnected after manual event (${reason})`);
+                return;
+            }
+
+            const messageName = socket.userDetails.name || 'unknown';
+            const messageColor = socket.userDetails.color || '#000000';
+
+            socket.broadcast.emit('user left', {
+                name: messageName,
+                color: messageColor,
+                text: `לקוח ${messageName} התנתק מהמערכת`
+            });
+
+            console.log(`user ${socket.userId} disconnected (${reason})`);
         });
     });
 };
