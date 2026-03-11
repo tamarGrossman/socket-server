@@ -41,11 +41,13 @@ export const createSocket = (httpServer) => {
 
         socket.on('new message', (newMessage) => {
             // שיגור אירוע לכל הלקוחות שמחוברים כרגע
+            const messageName = socket.userDetails.name || 'unknown';
+            const messageColor = socket.userDetails.color || '#000000';
+
             io.emit('send message', {
-                by: socket.userId,
                 msg: newMessage,
-                name: socket.userDetails.name,
-                color: socket.userDetails.color
+                name: messageName,
+                color: messageColor
             });
         });
     });

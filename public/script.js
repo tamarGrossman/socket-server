@@ -77,9 +77,9 @@ socket.on('client details updated', ({ userId, name, color }) => {
 socket.on('send message', msgFromServer => {
     const item = document.createElement('li');
 
-    const fromName = msgFromServer.name ? `${msgFromServer.name} (${msgFromServer.by})` : `user ${msgFromServer.by}`;
+    const fromName = msgFromServer.name || 'unknown';
     item.textContent = `${fromName}: ${msgFromServer.msg}`;
-    if (msgFromServer.color) item.style.color = msgFromServer.color;
+    item.style.color = msgFromServer.color || '#000000';
 
     messages.append(item);
 
