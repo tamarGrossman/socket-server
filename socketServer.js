@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 
 let id = 1;
+let activeClients = 0;
 
 export const createSocket = (httpServer) => {
     const io = new Server(httpServer, {
@@ -11,6 +12,11 @@ export const createSocket = (httpServer) => {
     // כשלקוח מתחבר לשרת
     // socket - נתוני הלקוח שהתחבר כרגע
     io.on('connection', (socket) => {
+        // עדכון מונה לקוחות מחוברים
+        activeClients += 1;
+        io.emit('active clients updated', activeClients);
+        console.log(`active clients updated: ${activeClients}`);
+
         // ניתן להוסיף נתונים על היוזר הנוכחי בצורה כזו לסוקט
         socket.userId = id++;
         socket.userDetails = {
@@ -69,19 +75,23 @@ export const createSocket = (httpServer) => {
         socket.on('disconnect', (reason) => {
             if (socket._announcedDisconnect) {
                 console.log(`user ${socket.userId} disconnected after manual event (${reason})`);
-                return;
+            } else {
+                const messageName = socket.userDetails.name || 'unknown';
+                const messageColor = socket.userDetails.color || '#000000';
+
+                socket.broadcast.emit('user left', {
+                    name: messageName,
+                    color: messageColor,
+                    text: `לקוח ${messageName} התנתק מהמערכת`
+                });
+
+                console.log(`user ${socket.userId} disconnected (${reason})`);
             }
 
-            const messageName = socket.userDetails.name || 'unknown';
-            const messageColor = socket.userDetails.color || '#000000';
-
-            socket.broadcast.emit('user left', {
-                name: messageName,
-                color: messageColor,
-                text: `לקוח ${messageName} התנתק מהמערכת`
-            });
-
-            console.log(`user ${socket.userId} disconnected (${reason})`);
+            // עדכון מונה לקוחות לאחר ניתוק (גם במקרה שהתנתק ידנית)
+            activeClients = Math.max(0, activeClients - 1);
+            io.emit('active clients updated', activeClients);
+            console.log(`active clients updated: ${activeClients}`);
         });
     });
 };

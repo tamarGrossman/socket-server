@@ -9,6 +9,7 @@ const userForm = document.getElementById('user-form');
 const usernameInput = document.getElementById('username');
 const colorInput = document.getElementById('user-color');
 const statusText = document.getElementById('status');
+const activeClientsText = document.getElementById('active-clients');
 const disconnectButton = document.getElementById('disconnect-btn');
 const form = document.getElementById('form');
 const input = document.getElementById('input');
@@ -105,6 +106,11 @@ socket.on('user left', ({ name, color, text }) => {
     item.style.color = color || '#000000';
     messages.append(item);
     messages.scrollTop = messages.scrollHeight;
+});
+
+socket.on('active clients updated', (count) => {
+    activeClientsText.textContent = `יש ${count} לקוחות פעילים כרגע`;
+    console.log('active clients updated event', count);
 });
 
 socket.on('send message', msgFromServer => {
