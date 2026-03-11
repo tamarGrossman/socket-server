@@ -11,6 +11,21 @@
     </head>
     <body>
         <h1>Simple Chat</h1>
+
+        <form id="user-form" action="#" class="user-form">
+            <label>
+                Username:
+                <input id="username" autocomplete="off" placeholder="Enter username" />
+            </label>
+            <label>
+                Color:
+                <input id="user-color" type="color" value="#0088ff" />
+            </label>
+            <button type="submit">Save Profile</button>
+        </form>
+
+        <p id="status" class="status"></p>
+
         <ul id="messages"></ul>
         <form id="form" action="#">
             <input

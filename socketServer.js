@@ -13,6 +13,12 @@ export const createSocket = (httpServer) => {
     io.on('connection', (socket) => {
         // ניתן להוסיף נתונים על היוזר הנוכחי בצורה כזו לסוקט
         socket.userId = id++;
+        socket.userDetails = {
+            id: socket.userId,
+            name: null,
+            color: null
+        };
+
         console.log(`user ${socket.userId} connected successfully`);
 
         // שליחת אירוע לקליינט הנוכחי שהתחבר
@@ -20,10 +26,27 @@ export const createSocket = (httpServer) => {
         // הקליינט יקבל את המידע רק אם הוא רשום לאירוע
         socket.emit('user connected', { userId: socket.userId });
 
+        socket.on('update client details', ({ name, color }) => {
+            socket.userDetails.name = name;
+            socket.userDetails.color = color;
+
+            io.to(socket.id).emit('client details updated', {
+                userId: socket.userId,
+                name,
+                color
+            });
+
+            console.log(`user ${socket.userId} set profile: ${name}, ${color}`);
+        });
+
         socket.on('new message', (newMessage) => {
             // שיגור אירוע לכל הלקוחות שמחוברים כרגע
-            // io.emit('send message', `new message added by ${socket.userId}: ${newMessage}`)
-            io.emit('send message', { by: socket.userId, msg: newMessage })
+            io.emit('send message', {
+                by: socket.userId,
+                msg: newMessage,
+                name: socket.userDetails.name,
+                color: socket.userDetails.color
+            });
         });
     });
 };

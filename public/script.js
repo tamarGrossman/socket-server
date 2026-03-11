@@ -5,17 +5,50 @@ const socket = io();
 // const socket = io.connect("http://localhost:8000");
 
 const h1 = document.querySelector('h1');
+const userForm = document.getElementById('user-form');
+const usernameInput = document.getElementById('username');
+const colorInput = document.getElementById('user-color');
+const statusText = document.getElementById('status');
 const form = document.getElementById('form');
 const input = document.getElementById('input');
 const messages = document.getElementById('messages');
 
-// Handle form submission
+let myUser = {
+    id: null,
+    name: null,
+    color: '#0088ff'
+};
+
+// Handle profile update form submission
+userForm.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const name = usernameInput.value.trim();
+    const color = colorInput.value;
+
+    if (!name) {
+        alert('Please enter username.');
+        return;
+    }
+
+    myUser.name = name;
+    myUser.color = color;
+
+    socket.emit('update client details', {
+        name: myUser.name,
+        color: myUser.color
+    });
+
+    statusText.textContent = 'Saving profile...';
+    statusText.style.color = '#444';
+});
+
+// Handle chat message form submission
 form.addEventListener('submit', e => {
     e.preventDefault();
 
     const message = input.value.trim();
     if (message) {
-        // Emit the message to the server
         socket.emit('new message', message);
 
         // Clear the input
@@ -25,11 +58,29 @@ form.addEventListener('submit', e => {
 
 // Listen for incoming messages
 socket.on('user connected', ({ userId }) => {
-    h1.textContent += ` - user ${userId}`
-})
+    myUser.id = userId;
+    h1.textContent += ` - user ${userId}`;
+});
+
+socket.on('client details updated', ({ userId, name, color }) => {
+    if (userId === myUser.id) {
+        h1.textContent += ` (username ${name})`;
+        statusText.textContent = 'Profile saved!';
+        statusText.style.color = 'green';
+
+        setTimeout(() => {
+            statusText.textContent = '';
+        }, 2500);
+    }
+});
+
 socket.on('send message', msgFromServer => {
     const item = document.createElement('li');
-    item.textContent = `new message added by ${msgFromServer.by}: ${msgFromServer.msg}`;
+
+    const fromName = msgFromServer.name ? `${msgFromServer.name} (${msgFromServer.by})` : `user ${msgFromServer.by}`;
+    item.textContent = `${fromName}: ${msgFromServer.msg}`;
+    if (msgFromServer.color) item.style.color = msgFromServer.color;
+
     messages.append(item);
 
     // Scroll to the bottom
